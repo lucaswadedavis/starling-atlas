@@ -8,6 +8,8 @@
 <title>Starling Atlas</title>
 
 <script type='text/javascript' src='./lib/jquery.min.js'></script>
+<script type='text/javascript' src='./lib/jquery.lettering.js'></script>
+<script type='text/javascript' src='./lib/jquery.textillate.js'></script>
 <script type='text/javascript' src='./lib/underscore-min.js'></script>
 <script src="http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js"></script>
 <script type='text/javascript' src='./lib/bootstrap/js/bootstrap.min.js'></script>
@@ -15,6 +17,7 @@
 
 <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css" />
 <link href='./lib/bootstrap/css/bootstrap.min.css' rel='stylesheet' type='text/css' />
+<link href='./lib/animate.css' rel='stylesheet' type='text/css' />
 
 <style type='text/css'>
 #starling-map {
@@ -22,6 +25,26 @@
   margin: -15px;
   padding: 0;
 }
+
+#intro-overlay {
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  padding: 0;
+  margin: 0;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#intro-overlay h1 {
+  font-size: 10em;
+}
+
 </style>
 
 </head>
