@@ -25,7 +25,7 @@ app.displayLocationsList = function(locations){
 };
 
 app.displayMap = function(){
-  var map = L.map('map').setView([37.755817, -122.389932], 11);
+  var map = L.map('starling-map').setView([37.755817, -122.389932], 11);
 
   L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
       attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
@@ -33,7 +33,8 @@ app.displayMap = function(){
       id: 'lukedavis.3457dfcb',
       accessToken: 'pk.eyJ1IjoibHVrZWRhdmlzIiwiYSI6IjcwMDBkNWEyNmZlYzU0YTI0YTYxMGYyMmNkZjBhNjRmIn0.kd__Iir1FCZkgkrp8r-byQ'
   }).addTo(map);
-
+  
+  /*
   map.on("click",function(e){
     var id = eid();
     var circle = L.circle(e.latlng, 100, {
@@ -52,10 +53,12 @@ app.displayMap = function(){
       }
       app.displayLocationsList(app.locations);
     });
-
+    
     app.locations.push({id:id, latlng:e.latlng, radius: 100, mapObject: circle, title:"Title", notes:"notes"});
     app.displayLocationsList(app.locations);
+    
   });
+  */
 
   app.map = map;
 
