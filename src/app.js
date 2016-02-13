@@ -1,5 +1,3 @@
-(function(){
-
   var creds = {
     id: 'lukedavis.3457dfcb',
     accessToken: 'pk.eyJ1IjoibHVrZWRhdmlzIiwiYSI6IjcwMDBkNWEyNmZlYzU0YTI0YTYxMGYyMmNkZjBhNjRmIn0.kd__Iir1FCZkgkrp8r-byQ'
@@ -141,9 +139,6 @@
     app.listeners();
   };
 
+$(document).ready(function(){app.init();});
 
-  window.app = app;
-
-})();
-
-$(document).ready(function(){ app.init() });
+module.exports = app;
