@@ -42,22 +42,12 @@
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
-	  var creds = {
-	    id: 'lukedavis.3457dfcb',
-	    accessToken: 'pk.eyJ1IjoibHVrZWRhdmlzIiwiYSI6IjcwMDBkNWEyNmZlYzU0YTI0YTYxMGYyMmNkZjBhNjRmIn0.kd__Iir1FCZkgkrp8r-byQ'
-	  };
+	var intro = __webpack_require__(1);
+	var creds = __webpack_require__(2);
 
-	  var eid = function(){
-	    var count = 0;
-	    eid = function(){
-	      return "_"+(count++);
-	    }
-	    return eid();
-	  }
-
-	  var app = {locations:[], selectedLocationID:null, map:null};
+	var app = {locations:[], selectedLocationID:null, map:null};
 
 	  app.templates = {};
 
@@ -71,12 +61,6 @@
 	      d += "</div>";
 	    return m + d;
 	    }, "<h2>Locations</h2>");
-	  };
-
-	  app.templates.introOverlay = function () {
-	    var d = '';
-	    d += '<div id="intro-overlay"><h1>The Starling Atlas</h1></div>';
-	    return d;
 	  };
 
 	  app.listeners = function () {
@@ -107,30 +91,6 @@
 	        }
 	      }
 	    });
-
-
-	  };
-
-	  app.displayIntro = function () {
-	    $("body").append(app.templates.introOverlay());
-	    $("#intro-overlay h1").textillate({
-	      loop: true,
-	      minDisplayTime: 500,
-	      in: {
-	        effect: 'fadeInUp',
-	        shuffle: true
-	      },
-	      out: {
-	        effect: 'fadeOutUp',
-	        shuffle: true,
-	        callback: function () {
-	          $("#intro-overlay h1").hide();
-	          $("#intro-overlay").fadeOut(function () {
-	            $(this).remove();
-	          });
-	        }
-	      }
-	    });
 	  };
 
 	  app.displayLocationsList = function(locations){
@@ -143,7 +103,7 @@
 	      attributionControl: false
 	    }).setView([37.755817, -122.389932], 11);
 
-	    L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+	    L.tileLayer(creds.mapboxURL, {
 	        maxZoom: 18,
 	        id: creds.id,
 	        accessToken: creds.accessToken
@@ -181,13 +141,59 @@
 
 	  app.init = function(){
 	    app.displayMap('starling-atlas');
-	    app.displayIntro();
+	    intro();
 	    app.listeners();
 	  };
 
 	$(document).ready(function(){app.init();});
 
 	module.exports = app;
+
+
+/***/ },
+/* 1 */
+/***/ function(module, exports) {
+
+	var template = function () {
+	  var d = '';
+	  d += '<div id="intro-overlay"><h1>The Starling Atlas</h1></div>';
+	  return d;
+	};
+
+	var intro = function () {
+	  $("body").append(template());
+	  $("#intro-overlay h1").textillate({
+	    loop: true,
+	    minDisplayTime: 500,
+	    in: {
+	      effect: 'fadeInUp',
+	    shuffle: true
+	    },
+	    out: {
+	      effect: 'fadeOutUp',
+	    shuffle: true,
+	    callback: function () {
+	      $("#intro-overlay h1").hide();
+	      $("#intro-overlay").fadeOut(function () {
+	        $(this).remove();
+	      });
+	    }
+	    }
+	  });
+	};
+
+	module.exports = intro;
+
+
+/***/ },
+/* 2 */
+/***/ function(module, exports) {
+
+	module.exports = {
+	  id: 'lukedavis.3457dfcb',
+	  accessToken: 'pk.eyJ1IjoibHVrZWRhdmlzIiwiYSI6IjcwMDBkNWEyNmZlYzU0YTI0YTYxMGYyMmNkZjBhNjRmIn0.kd__Iir1FCZkgkrp8r-byQ',
+	  mapboxURL: 'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}'
+	};
 
 
 /***/ }
