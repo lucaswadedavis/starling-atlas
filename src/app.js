@@ -1,5 +1,6 @@
 var intro = require('./intro.js');
 var creds = require('./credentials.js');
+var Starling = require('./starling.js');
 
 var app = {locations:[], selectedLocationID:null, map:null};
 
@@ -93,12 +94,24 @@ var app = {locations:[], selectedLocationID:null, map:null};
 
   };
 
+  app.getStarlings = function (n) {
+    var starlings = [];
+    for (var i = 0; i < n; i++) {
+      starlings.push(new Starling());
+    }
+    app.starlings = starlings;
+  };
+
   app.init = function(){
     app.displayMap('starling-atlas');
     intro();
     app.listeners();
+    app.getStarlings(100);
   };
 
-$(document).ready(function(){app.init();});
+$(document).ready(function(){
+  window.app = app;  
+  app.init();
+});
 
 module.exports = app;
