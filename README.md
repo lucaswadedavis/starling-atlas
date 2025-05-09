@@ -28,6 +28,14 @@ The frontend now supports persistent management of satellites using the browser'
 
 This system is entirely client-side and does not affect the backend or any server-side storage.
 
+## User-Generated Satellites on the Globe
+
+- When a user submits a satellite via the TLE form in the frontend, it is added to the list of satellites and displayed on the interactive 3D globe.
+- The frontend passes the TLE data, color, and display name for each satellite to the `GlobeCanvas` component.
+- `GlobeCanvas` uses [satellite.js](https://github.com/shashwatak/satellite-js) to propagate each satellite's position in real time, converting TLEs to latitude, longitude, and altitude.
+- The globe updates every animation frame to show the current position of all user-generated satellites.
+- The frontend client runs at [http://localhost:5173](http://localhost:5173).
+
 ---
 
 See the code in `frontend/src/GlobeCanvas.tsx` for implementation details.

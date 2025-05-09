@@ -6,8 +6,20 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import * as satellite from "satellite.js";
 
 const EARTH_RADIUS_KM = 6371; // km
+// Virtual time step in seconds per animation frame
+const TIME_STEP_SECONDS = 60; // 1 minute per frame
 
-const GlobeCanvas: React.FC = () => {
+// Add prop type for satellites
+interface GlobeCanvasProps {
+  satellites: {
+    tle_line1: string;
+    tle_line2: string;
+    color: string;
+    displayName: string;
+  }[];
+}
+
+const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
   const globeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -60,55 +72,55 @@ const GlobeCanvas: React.FC = () => {
 
     // Fetch TLE data and animate satellites
     let frameId: number;
-    fetch("/assets/space-track-leo.txt")
-      .then((r) => r.text())
-      .then((rawData) => {
-        const tleData = rawData
-          .replace(/\r/g, "")
-          .split(/\n(?=[^12])/) // split on newlines not followed by 1 or 2
-          .map((tle) => tle.split("\n"));
-        const satData: any[] = tleData
-          .map(([name, ...tle]) => ({
-            satrec: satellite.twoline2satrec(...(tle as [string, string])),
-            name: name.trim().replace(/^0 /, ""),
-          }))
-          // exclude those that can't be propagated
-          .filter((d) => !!satellite.propagate(d.satrec, new Date())?.position);
+    // --- Animate user satellites ---
+    let time = new Date(); // Virtual time
 
-        // time ticker
-        let time = new Date();
-        const TIME_STEP = 1.5 * 1000; // ms per frame
-        function frameTicker() {
-          frameId = requestAnimationFrame(frameTicker);
-
-          // Advance time
-          time = new Date(+time + TIME_STEP);
-
-          // Update satellite positions
-          const gmst = satellite.gstime(time);
-          satData.forEach((d) => {
-            const eci = satellite.propagate(d.satrec, time);
+    function getSatPositions(currentTime: Date) {
+      const gmst = satellite.gstime(currentTime);
+      return satellites
+        .map((sat) => {
+          try {
+            const satrec = satellite.twoline2satrec(
+              sat.tle_line1,
+              sat.tle_line2
+            );
+            const eci = satellite.propagate(satrec, currentTime);
             if (eci && eci.position) {
               const gdPos = satellite.eciToGeodetic(eci.position, gmst);
-              d.lat = satellite.radiansToDegrees(gdPos.latitude);
-              d.lng = satellite.radiansToDegrees(gdPos.longitude);
-              d.alt = gdPos.height / EARTH_RADIUS_KM;
+              return {
+                lat: satellite.radiansToDegrees(gdPos.latitude),
+                lng: satellite.radiansToDegrees(gdPos.longitude),
+                alt: gdPos.height / EARTH_RADIUS_KM,
+                color: sat.color,
+                name: sat.displayName,
+              };
             }
-          });
-
-          const filteredSatData = satData.filter(
-            (d) => !isNaN(d.lat) && !isNaN(d.lng) && !isNaN(d.alt)
-          );
-          if (Array.isArray(filteredSatData)) {
-            Globe.particlesData([filteredSatData]);
+          } catch (e) {
+            // Ignore satellites that can't be propagated
           }
-        }
-        frameTicker();
-      });
+          return null;
+        })
+        .filter(
+          (
+            x
+          ): x is {
+            lat: number;
+            lng: number;
+            alt: number;
+            color: string;
+            name: string;
+          } => x !== null
+        );
+    }
 
     // Animation loop
     function animate() {
       tbControls.update();
+      // Advance virtual time
+      time = new Date(time.getTime() + TIME_STEP_SECONDS * 100);
+      // Update satellite positions
+      const satPositions = getSatPositions(time);
+      Globe.particlesData([satPositions]);
       renderer.render(scene, camera);
       frameId = requestAnimationFrame(animate);
     }
@@ -135,7 +147,7 @@ const GlobeCanvas: React.FC = () => {
         globeRef.current.removeChild(renderer.domElement);
       }
     };
-  }, []);
+  }, [satellites]);
 
   return (
     <div>

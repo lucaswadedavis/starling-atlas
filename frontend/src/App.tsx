@@ -458,7 +458,16 @@ export default function App() {
     <div className="flex h-screen w-screen overflow-hidden bg-transparent">
       <div className="w-[400px] overflow-y-auto border-r">{renderForm()}</div>
       <div className="flex-1 flex items-center justify-center p-0 bg-transparent">
-        <GlobeCanvas />
+        <GlobeCanvas
+          satellites={satellites
+            .filter((sat) => sat.form.tle_line1 && sat.form.tle_line2)
+            .map((sat) => ({
+              tle_line1: sat.form.tle_line1,
+              tle_line2: sat.form.tle_line2,
+              color: sat.color,
+              displayName: sat.displayName,
+            }))}
+        />
       </div>
       <div className="w-[300px] overflow-y-auto border-l border-gray-200 bg-gray-500 p-8">
         {renderSatelliteList()}
