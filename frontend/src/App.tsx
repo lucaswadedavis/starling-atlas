@@ -3,6 +3,7 @@ import * as THREE from "three";
 import ThreeGlobe from "three-globe";
 import GlobeCanvas from "./GlobeCanvas";
 import earthImg from "./assets/earth-blue-marble.jpg";
+import { createNameId } from "./utils";
 
 const propagatorsTLE = ["SKYFIELD", "SGP4-PY", "ASTRO"];
 const propagatorsSV = ["RK"];
@@ -12,15 +13,6 @@ const DEFAULT_TLE_LINE1 =
   "1 25544U 98067A   24128.51835648  .00016717  00000-0  10270-3 0  9002";
 const DEFAULT_TLE_LINE2 =
   "2 25544  51.6417  13.2342 0003782  80.8882  37.2822 15.50394291447097";
-
-function getNowLocalISOString() {
-  const now = new Date();
-  // Pad to YYYY-MM-DDTHH:MM (no seconds/millis)
-  const pad = (n: number) => n.toString().padStart(2, "0");
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(
-    now.getDate()
-  )}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
-}
 
 export default function App() {
   const [tab, setTab] = useState<"TLE" | "StateVector">("TLE");
@@ -38,7 +30,47 @@ export default function App() {
   const [tleLoading, setTleLoading] = useState(false);
   const [tleError, setTleError] = useState<string | null>(null);
 
+  // --- Satellite Types ---
+  type Satellite = {
+    id: string;
+    displayName: string;
+    form: typeof tleForm;
+    results?: any[];
+    createdAt: string;
+    color: string;
+  };
+
+  // --- Utility for localStorage ---
+  function loadSatellites(): Satellite[] {
+    try {
+      const raw = localStorage.getItem("satellites");
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveSatellites(sats: Satellite[]) {
+    localStorage.setItem("satellites", JSON.stringify(sats));
+  }
+
+  function getNowLocalISOString() {
+    const now = new Date();
+    // Pad to YYYY-MM-DDTHH:MM (no seconds/millis)
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(
+      now.getDate()
+    )}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  }
+
   const globeRef = useRef<HTMLDivElement>(null);
+  const [satellites, setSatellites] = useState<Satellite[]>(() =>
+    loadSatellites()
+  );
+  const [selectedSatelliteId, setSelectedSatelliteId] = useState<string | null>(
+    null
+  );
+
   useEffect(() => {
     if (!globeRef.current) return;
     // Scene setup
@@ -119,6 +151,21 @@ export default function App() {
     };
   }, []);
 
+  // When satellites change, persist to localStorage
+  useEffect(() => {
+    saveSatellites(satellites);
+  }, [satellites]);
+
+  // When selectedSatelliteId changes, load its form values
+  useEffect(() => {
+    if (!selectedSatelliteId) return;
+    const sat = satellites.find((s) => s.id === selectedSatelliteId);
+    if (sat) {
+      setTleForm(sat.form);
+      setTleResults(sat.results || null);
+    }
+  }, [selectedSatelliteId]);
+
   // Handle TLE form input
   function handleTleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -131,12 +178,33 @@ export default function App() {
     }));
   }
 
+  // --- Utility for random color ---
+  function randomHslColor() {
+    const hue = Math.floor(Math.random() * 360);
+    return `hsl(${hue}, 70%, 50%)`;
+  }
+
   // Handle TLE form submit
   async function handleTleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setTleLoading(true);
     setTleError(null);
     setTleResults(null);
+
+    // Create new satellite record
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const displayName = createNameId();
+    const color = randomHslColor();
+    const newSat: Satellite = {
+      id,
+      displayName,
+      form: { ...tleForm },
+      createdAt: new Date().toISOString(),
+      color,
+    };
+    setSatellites((prev) => [...prev, newSat]);
+    setSelectedSatelliteId(id);
+
     try {
       const res = await fetch("http://localhost:3001/proxy", {
         method: "POST",
@@ -164,6 +232,10 @@ export default function App() {
       }
       const data = await res.json();
       setTleResults(data);
+      // Update satellite with results
+      setSatellites((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, results: data } : s))
+      );
     } catch (err: any) {
       setTleError(err.message || "Unknown error");
     } finally {
@@ -353,7 +425,33 @@ export default function App() {
   };
 
   const renderSatelliteList = () => {
-    return <div className="text-xl text-white">Satellite List</div>;
+    if (!satellites.length) {
+      return <div className="text-white">No satellites yet.</div>;
+    }
+    return (
+      <div>
+        <div className="text-xl text-white">Satellites</div>
+        <ul className="space-y-2">
+          {satellites.map((sat) => (
+            <li
+              key={sat.id}
+              className={`p-2 rounded cursor-pointer ${
+                sat.id === selectedSatelliteId
+                  ? "bg-blue-600 text-white"
+                  : "bg-white text-gray-900 hover:bg-blue-100"
+              }`}
+              onClick={() => setSelectedSatelliteId(sat.id)}
+            >
+              <span
+                className="inline-block w-3 h-3 rounded-full mr-2 align-middle"
+                style={{ backgroundColor: sat.color }}
+              ></span>
+              {sat.displayName}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
   };
 
   return (
@@ -364,7 +462,6 @@ export default function App() {
       </div>
       <div className="w-[300px] overflow-y-auto border-l border-gray-200 bg-gray-500 p-8">
         {renderSatelliteList()}
-        <img src={earthImg} alt="Earth" className="w-full h-full" />
       </div>
     </div>
   );
