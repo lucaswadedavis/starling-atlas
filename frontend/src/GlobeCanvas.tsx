@@ -77,8 +77,12 @@ const GlobeCanvas: React.FC = () => {
 
         // time ticker
         let time = new Date();
+        const TIME_STEP = 1.5 * 1000; // ms per frame
         function frameTicker() {
           frameId = requestAnimationFrame(frameTicker);
+
+          // Advance time
+          time = new Date(+time + TIME_STEP);
 
           // Update satellite positions
           const gmst = satellite.gstime(time);
