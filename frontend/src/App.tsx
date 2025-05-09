@@ -71,6 +71,9 @@ export default function App() {
     null
   );
 
+  // Add state for overflow menu
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
   useEffect(() => {
     if (!globeRef.current) return;
     // Scene setup
@@ -241,6 +244,14 @@ export default function App() {
     } finally {
       setTleLoading(false);
     }
+  }
+
+  function handleDeleteSatellite(id: string) {
+    setSatellites((prev) => prev.filter((sat) => sat.id !== id));
+    if (selectedSatelliteId === id) {
+      setSelectedSatelliteId(null);
+    }
+    setOpenMenuId(null);
   }
 
   const renderForm = () => {
@@ -435,18 +446,52 @@ export default function App() {
           {satellites.map((sat) => (
             <li
               key={sat.id}
-              className={`p-2 rounded cursor-pointer ${
+              className={`relative p-2 rounded cursor-pointer flex items-center justify-between group ${
                 sat.id === selectedSatelliteId
                   ? "bg-blue-600 text-white"
                   : "bg-white text-gray-900 hover:bg-blue-100"
               }`}
               onClick={() => setSelectedSatelliteId(sat.id)}
             >
-              <span
-                className="inline-block w-3 h-3 rounded-full mr-2 align-middle"
-                style={{ backgroundColor: sat.color }}
-              ></span>
-              {sat.displayName}
+              <span className="flex items-center">
+                <span
+                  className="inline-block w-3 h-3 rounded-full mr-2 align-middle"
+                  style={{ backgroundColor: sat.color }}
+                ></span>
+                {sat.displayName}
+              </span>
+              <button
+                className="ml-2 p-1 rounded hover:bg-gray-200 group-hover:visible focus:visible invisible"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenMenuId(openMenuId === sat.id ? null : sat.id);
+                }}
+                aria-label="Satellite options"
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <circle cx="4" cy="10" r="2" />
+                  <circle cx="10" cy="10" r="2" />
+                  <circle cx="16" cy="10" r="2" />
+                </svg>
+              </button>
+              {openMenuId === sat.id && (
+                <div
+                  className="absolute right-2 top-8 z-10 bg-white border rounded shadow-lg py-1 w-28"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                    onClick={() => handleDeleteSatellite(sat.id)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
             </li>
           ))}
         </ul>

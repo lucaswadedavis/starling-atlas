@@ -27,6 +27,12 @@ const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
   const controlsRef = useRef<any>(null);
   const timeRef = useRef<Date>(new Date());
   const frameIdRef = useRef<number>();
+  const satellitesRef = useRef(satellites); // Always up-to-date satellites
+
+  // Keep satellitesRef in sync with latest satellites prop
+  useEffect(() => {
+    satellitesRef.current = satellites;
+  }, [satellites]);
 
   // Only set up Three.js scene and Globe once
   useEffect(() => {
@@ -87,7 +93,10 @@ const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
       );
       // Update satellite positions
       if (globeInstance.current) {
-        const satPositions = getSatPositions(timeRef.current);
+        const satPositions = getSatPositions(
+          timeRef.current,
+          satellitesRef.current
+        );
         globeInstance.current.particlesData([satPositions]);
       }
       renderer.render(scene, camera);
@@ -121,19 +130,19 @@ const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
 
   // Update satellite data when satellites prop changes (without resetting scene)
   useEffect(() => {
-    // On satellite prop change, update the globe's particlesData immediately
     if (globeInstance.current) {
-      // Optionally, reset virtual time if you want new satellites to start at 'now'
-      // timeRef.current = new Date();
-      const satPositions = getSatPositions(timeRef.current);
+      const satPositions = getSatPositions(timeRef.current, satellites);
       globeInstance.current.particlesData([satPositions]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [satellites]);
 
-  function getSatPositions(currentTime: Date) {
+  function getSatPositions(
+    currentTime: Date,
+    sats: GlobeCanvasProps["satellites"]
+  ) {
     const gmst = satellite.gstime(currentTime);
-    return satellites
+    return sats
       .map((sat) => {
         try {
           const satrec = satellite.twoline2satrec(sat.tle_line1, sat.tle_line2);
