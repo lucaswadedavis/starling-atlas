@@ -21,7 +21,14 @@ interface GlobeCanvasProps {
 
 const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
   const globeRef = useRef<HTMLDivElement>(null);
+  const globeInstance = useRef<any>(null); // Store Globe instance
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const controlsRef = useRef<any>(null);
+  const timeRef = useRef<Date>(new Date());
+  const frameIdRef = useRef<number>();
 
+  // Only set up Three.js scene and Globe once
   useEffect(() => {
     if (!globeRef.current) return;
 
@@ -30,6 +37,7 @@ const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
     renderer.setSize(window.innerWidth - 600, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
     globeRef.current.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
 
     // Setup scene
     const scene = new THREE.Scene();
@@ -39,6 +47,7 @@ const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
     camera.aspect = (window.innerWidth - 600) / window.innerHeight;
     camera.updateProjectionMatrix();
     camera.position.z = 400;
+    cameraRef.current = camera;
 
     // Add camera controls
     const tbControls = new OrbitControls(camera, renderer.domElement);
@@ -46,6 +55,7 @@ const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
     tbControls.maxDistance = 400;
     tbControls.rotateSpeed = 5;
     tbControls.zoomSpeed = 0.8;
+    controlsRef.current = tbControls;
 
     // Add lights
     scene.add(new THREE.AmbientLight(0xcccccc, Math.PI));
@@ -58,9 +68,7 @@ const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
       .particleLng("lng")
       .particleAltitude("alt")
       .particlesSize(2);
-
-    // Static minimal test: set a single particle
-    //Globe.particlesData([{ lat: 0, lng: 0, alt: 0 }]);
+    globeInstance.current = Globe;
 
     // Satellite icon
     new THREE.TextureLoader().load("/assets/sat-icon.png", (texture) => {
@@ -70,69 +78,31 @@ const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
 
     scene.add(Globe);
 
-    // Fetch TLE data and animate satellites
-    let frameId: number;
-    // --- Animate user satellites ---
-    let time = new Date(); // Virtual time
-
-    function getSatPositions(currentTime: Date) {
-      const gmst = satellite.gstime(currentTime);
-      return satellites
-        .map((sat) => {
-          try {
-            const satrec = satellite.twoline2satrec(
-              sat.tle_line1,
-              sat.tle_line2
-            );
-            const eci = satellite.propagate(satrec, currentTime);
-            if (eci && eci.position) {
-              const gdPos = satellite.eciToGeodetic(eci.position, gmst);
-              return {
-                lat: satellite.radiansToDegrees(gdPos.latitude),
-                lng: satellite.radiansToDegrees(gdPos.longitude),
-                alt: gdPos.height / EARTH_RADIUS_KM,
-                color: sat.color,
-                name: sat.displayName,
-              };
-            }
-          } catch (e) {
-            // Ignore satellites that can't be propagated
-          }
-          return null;
-        })
-        .filter(
-          (
-            x
-          ): x is {
-            lat: number;
-            lng: number;
-            alt: number;
-            color: string;
-            name: string;
-          } => x !== null
-        );
-    }
-
     // Animation loop
     function animate() {
       tbControls.update();
       // Advance virtual time
-      time = new Date(time.getTime() + TIME_STEP_SECONDS * 100);
+      timeRef.current = new Date(
+        timeRef.current.getTime() + TIME_STEP_SECONDS * 100
+      );
       // Update satellite positions
-      const satPositions = getSatPositions(time);
-      Globe.particlesData([satPositions]);
+      if (globeInstance.current) {
+        const satPositions = getSatPositions(timeRef.current);
+        globeInstance.current.particlesData([satPositions]);
+      }
       renderer.render(scene, camera);
-      frameId = requestAnimationFrame(animate);
+      frameIdRef.current = requestAnimationFrame(animate);
     }
     animate();
 
     // Handle resize
     const handleResize = () => {
-      if (!globeRef.current) return;
-      camera.aspect =
+      if (!globeRef.current || !cameraRef.current || !rendererRef.current)
+        return;
+      cameraRef.current.aspect =
         globeRef.current.clientWidth / globeRef.current.clientHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(
+      cameraRef.current.updateProjectionMatrix();
+      rendererRef.current.setSize(
         globeRef.current.clientWidth - 600,
         globeRef.current.clientHeight
       );
@@ -141,13 +111,60 @@ const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
 
     return () => {
       window.removeEventListener("resize", handleResize);
-      if (frameId) cancelAnimationFrame(frameId);
+      if (frameIdRef.current) cancelAnimationFrame(frameIdRef.current);
       renderer.dispose();
       if (globeRef.current) {
         globeRef.current.removeChild(renderer.domElement);
       }
     };
+  }, []);
+
+  // Update satellite data when satellites prop changes (without resetting scene)
+  useEffect(() => {
+    // On satellite prop change, update the globe's particlesData immediately
+    if (globeInstance.current) {
+      // Optionally, reset virtual time if you want new satellites to start at 'now'
+      // timeRef.current = new Date();
+      const satPositions = getSatPositions(timeRef.current);
+      globeInstance.current.particlesData([satPositions]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [satellites]);
+
+  function getSatPositions(currentTime: Date) {
+    const gmst = satellite.gstime(currentTime);
+    return satellites
+      .map((sat) => {
+        try {
+          const satrec = satellite.twoline2satrec(sat.tle_line1, sat.tle_line2);
+          const eci = satellite.propagate(satrec, currentTime);
+          if (eci && eci.position) {
+            const gdPos = satellite.eciToGeodetic(eci.position, gmst);
+            return {
+              lat: satellite.radiansToDegrees(gdPos.latitude),
+              lng: satellite.radiansToDegrees(gdPos.longitude),
+              alt: gdPos.height / EARTH_RADIUS_KM,
+              color: sat.color,
+              name: sat.displayName,
+            };
+          }
+        } catch (e) {
+          // Ignore satellites that can't be propagated
+        }
+        return null;
+      })
+      .filter(
+        (
+          x
+        ): x is {
+          lat: number;
+          lng: number;
+          alt: number;
+          color: string;
+          name: string;
+        } => x !== null
+      );
+  }
 
   return (
     <div>
