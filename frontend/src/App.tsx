@@ -1,4 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import * as THREE from "three";
+import ThreeGlobe from "three-globe";
+import GlobeCanvas from "./GlobeCanvas";
+import earthImg from "./assets/earth-blue-marble.jpg";
 
 const propagatorsTLE = ["SKYFIELD", "SGP4-PY", "ASTRO"];
 const propagatorsSV = ["RK"];
@@ -33,6 +37,87 @@ export default function App() {
   const [tleResults, setTleResults] = useState<any[] | null>(null);
   const [tleLoading, setTleLoading] = useState(false);
   const [tleError, setTleError] = useState<string | null>(null);
+
+  const globeRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!globeRef.current) return;
+    // Scene setup
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(
+      45,
+      globeRef.current.clientWidth / globeRef.current.clientHeight,
+      0.1,
+      1000
+    );
+    camera.position.z = 3;
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(
+      globeRef.current.clientWidth,
+      globeRef.current.clientHeight
+    );
+    globeRef.current.appendChild(renderer.domElement);
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    scene.add(ambientLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    directionalLight.position.set(5, 3, 5);
+    scene.add(directionalLight);
+
+    // three-globe setup: just the globe, no polygons
+    const globe = new (ThreeGlobe as any)();
+    scene.add(globe);
+
+    // Dummy satellite: a single point above the globe
+    const satellites = [
+      {
+        lat: 0, // Equator
+        lng: 0, // Prime meridian
+        alt: 1.2, // 20% above the globe surface
+        size: 0.03,
+        color: "red",
+        name: "DummySat-1",
+      },
+    ];
+    globe
+      .pointsData(satellites)
+      .pointLat("lat")
+      .pointLng("lng")
+      .pointAltitude("alt")
+      .pointColor("color")
+      .pointRadius("size");
+
+    // Animation loop
+    let frameId: number;
+    const animate = () => {
+      globe.rotation.y += 0.002;
+      renderer.render(scene, camera);
+      frameId = requestAnimationFrame(animate);
+    };
+    animate();
+
+    // Handle resize
+    const handleResize = () => {
+      if (!globeRef.current) return;
+      camera.aspect =
+        globeRef.current.clientWidth / globeRef.current.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(
+        globeRef.current.clientWidth,
+        globeRef.current.clientHeight
+      );
+    };
+    window.addEventListener("resize", handleResize);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      cancelAnimationFrame(frameId);
+      renderer.dispose();
+      globeRef.current?.removeChild(renderer.domElement);
+    };
+  }, []);
 
   // Handle TLE form input
   function handleTleChange(
@@ -267,22 +352,19 @@ export default function App() {
     );
   };
 
-  const renderPlanetView = () => {
-    return <div className="text-xl text-gray-600">Planet View</div>;
-  };
-
   const renderSatelliteList = () => {
     return <div className="text-xl text-white">Satellite List</div>;
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-gray-50">
+    <div className="flex h-screen w-screen overflow-hidden bg-transparent">
       <div className="w-[400px] overflow-y-auto border-r">{renderForm()}</div>
-      <div className="flex-1 flex items-center justify-center bg-gray-100 p-8">
-        {renderPlanetView()}
+      <div className="flex-1 flex items-center justify-center p-0 bg-transparent">
+        <GlobeCanvas />
       </div>
       <div className="w-[300px] overflow-y-auto border-l border-gray-200 bg-gray-500 p-8">
         {renderSatelliteList()}
+        <img src={earthImg} alt="Earth" className="w-full h-full" />
       </div>
     </div>
   );
