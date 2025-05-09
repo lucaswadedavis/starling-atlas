@@ -30,6 +30,19 @@ export default function App() {
   const [tleLoading, setTleLoading] = useState(false);
   const [tleError, setTleError] = useState<string | null>(null);
 
+  // State Vector form state
+  const [svForm, setSvForm] = useState({
+    propagator: propagatorsSV[0],
+    position: [7000, 0, 0], // km
+    velocity: [0, 7.5, 0], // km/s
+    start_time: getNowLocalISOString(),
+    step_minutes: 10,
+    count: 20,
+  });
+  const [svResults, setSvResults] = useState<any[] | null>(null);
+  const [svLoading, setSvLoading] = useState(false);
+  const [svError, setSvError] = useState<string | null>(null);
+
   // --- Satellite Types ---
   type Satellite = {
     id: string;
@@ -181,6 +194,30 @@ export default function App() {
     }));
   }
 
+  // Handle State Vector form input
+  function handleSvChange(
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) {
+    const { name, value } = e.target;
+    if (name.startsWith("position") || name.startsWith("velocity")) {
+      const [field, idx] = name.split("-");
+      if (field === "position" || field === "velocity") {
+        setSvForm((prev) => ({
+          ...prev,
+          [field]: (prev as any)[field].map((v: number, i: number) =>
+            i === Number(idx) ? Number(value) : v
+          ),
+        }));
+      }
+    } else {
+      setSvForm((prev) => ({
+        ...prev,
+        [name]:
+          name === "step_minutes" || name === "count" ? Number(value) : value,
+      }));
+    }
+  }
+
   // --- Utility for random color ---
   function randomHslColor() {
     const hue = Math.floor(Math.random() * 360);
@@ -243,6 +280,46 @@ export default function App() {
       setTleError(err.message || "Unknown error");
     } finally {
       setTleLoading(false);
+    }
+  }
+
+  // Handle State Vector form submit
+  async function handleSvSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSvLoading(true);
+    setSvError(null);
+    setSvResults(null);
+    try {
+      const res = await fetch("http://localhost:3001/proxy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: `https://api.optimus-space.com/astro/orbit_prop/numerical/sv/${svForm.propagator}`,
+          method: "POST",
+          body: {
+            position: svForm.position,
+            velocity: svForm.velocity,
+            start_time: svForm.start_time,
+            step_minutes: svForm.step_minutes,
+            count: svForm.count,
+          },
+        }),
+      });
+      if (!res.ok) {
+        let err;
+        try {
+          err = await res.json();
+        } catch {
+          err = { detail: res.statusText };
+        }
+        throw new Error(err.error || err.detail?.[0]?.msg || res.statusText);
+      }
+      const data = await res.json();
+      setSvResults(data);
+    } catch (err: any) {
+      setSvError(err.message || "Unknown error");
+    } finally {
+      setSvLoading(false);
     }
   }
 
@@ -426,8 +503,151 @@ export default function App() {
 
           {/* State Vector Propagation Tab (form to be implemented next) */}
           {tab === "StateVector" && (
-            <div>
-              <p>State Vector propagation form coming next...</p>
+            <form onSubmit={handleSvSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Propagator
+                </label>
+                <select
+                  name="propagator"
+                  value={svForm.propagator}
+                  onChange={handleSvChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                >
+                  {propagatorsSV.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Position (km)
+                </label>
+                <div className="flex space-x-2">
+                  {svForm.position.map((v, i) => (
+                    <input
+                      key={i}
+                      name={`position-${i}`}
+                      type="number"
+                      value={v}
+                      onChange={handleSvChange}
+                      required
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      placeholder={["x", "y", "z"][i]}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Velocity (km/s)
+                </label>
+                <div className="flex space-x-2">
+                  {svForm.velocity.map((v, i) => (
+                    <input
+                      key={i}
+                      name={`velocity-${i}`}
+                      type="number"
+                      value={v}
+                      onChange={handleSvChange}
+                      required
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      placeholder={["vx", "vy", "vz"][i]}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Start Time (UTC)
+                </label>
+                <input
+                  name="start_time"
+                  type="datetime-local"
+                  value={svForm.start_time}
+                  onChange={handleSvChange}
+                  required
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex space-x-4">
+                  <div className="w-1/2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Step (minutes)
+                    </label>
+                    <input
+                      name="step_minutes"
+                      type="number"
+                      min={1}
+                      value={svForm.step_minutes}
+                      onChange={handleSvChange}
+                      required
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="w-1/2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Count
+                    </label>
+                    <input
+                      name="count"
+                      type="number"
+                      min={1}
+                      value={svForm.count}
+                      onChange={handleSvChange}
+                      required
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={svLoading}
+                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md"
+              >
+                {svLoading ? "Propagating..." : "Propagate"}
+              </button>
+              {svError && <div className="text-red-500">{svError}</div>}
+            </form>
+          )}
+          {/* SV Results Table */}
+          {tab === "StateVector" && svResults && (
+            <div className="mt-4">
+              <h2 className="text-lg font-semibold">Results</h2>
+              <div className="mt-2">
+                <table className="table-auto w-full">
+                  <thead>
+                    <tr>
+                      <th className="px-4 py-2">Time</th>
+                      <th className="px-4 py-2">Position (km)</th>
+                      <th className="px-4 py-2">Velocity (km/s)</th>
+                      <th className="px-4 py-2">LLA</th>
+                      <th className="px-4 py-2">Error</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {svResults.map((row, i) => (
+                      <tr key={i}>
+                        <td className="border px-4 py-2">{row.time}</td>
+                        <td className="border px-4 py-2">
+                          {row.pos_km?.join(", ")}
+                        </td>
+                        <td className="border px-4 py-2">
+                          {row.vel_kms?.join(", ")}
+                        </td>
+                        <td className="border px-4 py-2">
+                          {row.lla?.join(", ")}
+                        </td>
+                        <td className="border px-4 py-2">{row.error}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>
