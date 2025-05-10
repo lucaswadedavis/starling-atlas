@@ -331,6 +331,45 @@ export default function App() {
     setOpenMenuId(null);
   }
 
+  const renderTleResults = () => {
+    if (!tleResults) return null;
+    return (
+      <>
+        <div className="mt-4">
+          <h2 className="text-lg font-semibold">Results</h2>
+          <div className="mt-2">
+            <table className="table-auto w-full">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2">Time</th>
+                  <th className="px-4 py-2">Position (km)</th>
+                  <th className="px-4 py-2">Velocity (km/s)</th>
+                  <th className="px-4 py-2">LLA</th>
+                  <th className="px-4 py-2">Error</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tleResults.map((row, i) => (
+                  <tr key={i}>
+                    <td className="border px-4 py-2">{row.time}</td>
+                    <td className="border px-4 py-2">
+                      {row.pos_km?.join(", ")}
+                    </td>
+                    <td className="border px-4 py-2">
+                      {row.vel_kms?.join(", ")}
+                    </td>
+                    <td className="border px-4 py-2">{row.lla?.join(", ")}</td>
+                    <td className="border px-4 py-2">{row.error}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </>
+    );
+  };
+
   const renderForm = () => {
     return (
       <div className="space-y-6">
@@ -462,43 +501,6 @@ export default function App() {
               </button>
               {tleError && <div className="text-red-500">{tleError}</div>}
             </form>
-          )}
-
-          {/* TLE Results Table */}
-          {tab === "TLE" && tleResults && (
-            <div className="mt-4">
-              <h2 className="text-lg font-semibold">Results</h2>
-              <div className="mt-2">
-                <table className="table-auto w-full">
-                  <thead>
-                    <tr>
-                      <th className="px-4 py-2">Time</th>
-                      <th className="px-4 py-2">Position (km)</th>
-                      <th className="px-4 py-2">Velocity (km/s)</th>
-                      <th className="px-4 py-2">LLA</th>
-                      <th className="px-4 py-2">Error</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {tleResults.map((row, i) => (
-                      <tr key={i}>
-                        <td className="border px-4 py-2">{row.time}</td>
-                        <td className="border px-4 py-2">
-                          {row.pos_km?.join(", ")}
-                        </td>
-                        <td className="border px-4 py-2">
-                          {row.vel_kms?.join(", ")}
-                        </td>
-                        <td className="border px-4 py-2">
-                          {row.lla?.join(", ")}
-                        </td>
-                        <td className="border px-4 py-2">{row.error}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
           )}
 
           {/* State Vector Propagation Tab (form to be implemented next) */}
@@ -719,23 +721,36 @@ export default function App() {
     );
   };
 
+  // Prepare svPaths for GlobeCanvas
+  const svPaths =
+    svResults && svResults.length > 0
+      ? [
+          {
+            color: "#ff00aa", // Use a fixed color for now, or pick from a palette
+            path: svResults
+              .filter((row) => Array.isArray(row.lla) && row.lla.length === 3)
+              .map((row) => ({
+                lat: row.lla[0],
+                lng: row.lla[1],
+                alt: row.lla[2] / 6371, // Convert km to Earth radii for three-globe
+              })),
+          },
+        ]
+      : [];
+
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-transparent">
-      <div className="w-[400px] overflow-y-auto border-r">{renderForm()}</div>
-      <div className="flex-1 flex items-center justify-center p-0 bg-transparent">
-        <GlobeCanvas
-          satellites={satellites
-            .filter((sat) => sat.form.tle_line1 && sat.form.tle_line2)
-            .map((sat) => ({
-              tle_line1: sat.form.tle_line1,
-              tle_line2: sat.form.tle_line2,
-              color: sat.color,
-              displayName: sat.displayName,
-            }))}
-        />
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-transparent">
+      <div className="flex flex-1">
+        <div className="w-[400px] overflow-y-auto border-r">{renderForm()}</div>
+        <div className="flex-1 flex items-center justify-center p-0 bg-transparent">
+          <GlobeCanvas satellites={satellites} />
+        </div>
+        <div className="w-[300px] overflow-y-auto border-l border-gray-200 bg-gray-500 p-8">
+          {renderSatelliteList()}
+        </div>
       </div>
-      <div className="w-[300px] overflow-y-auto border-l border-gray-200 bg-gray-500 p-8">
-        {renderSatelliteList()}
+      <div className="w-full h-[200px] overflow-y-auto border-t border-gray-200 p-4 ">
+        {renderTleResults()}
       </div>
     </div>
   );

@@ -10,13 +10,17 @@ const EARTH_RADIUS_KM = 6371; // km
 const TIME_STEP_SECONDS = 60; // 1 minute per frame
 
 // Add prop type for satellites
+interface Satellite {
+  id: string;
+  displayName: string;
+  form: any;
+  results?: any[];
+  createdAt: string;
+  color: string;
+}
+
 interface GlobeCanvasProps {
-  satellites: {
-    tle_line1: string;
-    tle_line2: string;
-    color: string;
-    displayName: string;
-  }[];
+  satellites: Satellite[];
 }
 
 const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
@@ -40,7 +44,7 @@ const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
 
     // Setup renderer
     const renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth - 600, window.innerHeight);
+    renderer.setSize(window.innerWidth - 600, window.innerHeight - 200);
     renderer.setPixelRatio(window.devicePixelRatio);
     globeRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
@@ -50,7 +54,7 @@ const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
 
     // Setup camera
     const camera = new THREE.PerspectiveCamera();
-    camera.aspect = (window.innerWidth - 600) / window.innerHeight;
+    camera.aspect = (window.innerWidth - 600) / (window.innerHeight - 200);
     camera.updateProjectionMatrix();
     camera.position.z = 400;
     cameraRef.current = camera;
@@ -58,7 +62,7 @@ const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
     // Add camera controls
     const tbControls = new OrbitControls(camera, renderer.domElement);
     tbControls.minDistance = 200;
-    tbControls.maxDistance = 400;
+    tbControls.maxDistance = 500;
     tbControls.rotateSpeed = 5;
     tbControls.zoomSpeed = 0.8;
     controlsRef.current = tbControls;
@@ -67,19 +71,46 @@ const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
     scene.add(new THREE.AmbientLight(0xcccccc, Math.PI));
     scene.add(new THREE.DirectionalLight(0xffffff, 0.6 * Math.PI));
 
+    const pathsData = satellites
+      .map((sat) => ({
+        color: sat.color,
+        path: Array.isArray(sat.results)
+          ? sat.results
+              .filter((row) => Array.isArray(row.lla) && row.lla.length === 3)
+              .map((row) => ({
+                lat: row.lla[0],
+                lng: row.lla[1],
+                alt: row.lla[2] / 6371,
+              }))
+          : [],
+      }))
+      .filter((p) => p.path.length > 1);
+    console.log("pathsdata", pathsData);
+    const paths = pathsData.map((p) =>
+      p.path.map((pt) => [pt.lat, pt.lng, pt.alt])
+    );
+    console.log(paths);
+    const colors = pathsData.map((p) => p.color);
+    console.log("colors", colors);
     // Setup globe
     const Globe = new ThreeGlobe()
       .globeImageUrl("/assets/earth-blue-marble.jpg")
       .particleLat("lat")
       .particleLng("lng")
       .particleAltitude("alt")
-      .particlesSize(2);
+      .particlesSize(2)
+      .pathsData(paths)
+      .pathColor((...args) => {
+        console.log("color args", args);
+        return "red";
+      })
+      .pathStroke(10);
     globeInstance.current = Globe;
 
     // Satellite icon
     new THREE.TextureLoader().load("/assets/sat-icon.png", (texture) => {
       texture.colorSpace = THREE.SRGBColorSpace;
-      //Globe.particlesTexture(texture);
+      Globe.particlesTexture(texture);
     });
 
     scene.add(Globe);
@@ -89,7 +120,7 @@ const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
       tbControls.update();
       // Advance virtual time
       timeRef.current = new Date(
-        timeRef.current.getTime() + TIME_STEP_SECONDS * 100
+        timeRef.current.getTime() + TIME_STEP_SECONDS * 10
       );
       // Update satellite positions
       if (globeInstance.current) {
@@ -137,6 +168,45 @@ const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [satellites]);
 
+  // Update paths when satellites change
+  useEffect(() => {
+    if (globeInstance.current && satellites.length > 0) {
+      const pathsData = satellites
+        .map((sat) => ({
+          color: sat.color,
+          path: Array.isArray(sat.results)
+            ? sat.results
+                .filter((row) => Array.isArray(row.lla) && row.lla.length === 3)
+                .map((row) => ({
+                  lat: row.lla[0],
+                  lng: row.lla[1],
+                  alt: row.lla[2] / 6371,
+                }))
+            : [],
+        }))
+        .filter((p) => p.path.length > 1);
+      console.log("pathsdata", pathsData);
+      const paths = pathsData.map((p) =>
+        p.path.map((pt) => [pt.lat, pt.lng, pt.alt])
+      );
+      console.log(paths);
+      const colors = pathsData.map((p) => p.color);
+      console.log("colors", colors);
+      globeInstance.current.pathsData(paths);
+      globeInstance.current.pathColor((...args) => {
+        console.log("color args", args);
+        // get the index of the path
+        const pathIndex = paths.indexOf(args[0]);
+        let color = "white";
+        if (pathIndex >= 0) {
+          console.log("pathIndex", pathIndex);
+          color = colors[pathIndex];
+        }
+        return color;
+      });
+    }
+  }, [satellites]);
+
   function getSatPositions(
     currentTime: Date,
     sats: GlobeCanvasProps["satellites"]
@@ -145,7 +215,10 @@ const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
     return sats
       .map((sat) => {
         try {
-          const satrec = satellite.twoline2satrec(sat.tle_line1, sat.tle_line2);
+          const satrec = satellite.twoline2satrec(
+            sat.form.tle_line1,
+            sat.form.tle_line2
+          );
           const eci = satellite.propagate(satrec, currentTime);
           if (eci && eci.position) {
             const gdPos = satellite.eciToGeodetic(eci.position, gmst);
@@ -179,7 +252,7 @@ const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
     <div>
       <div
         ref={globeRef}
-        style={{ height: "100vh", width: "calc(100vw - 600px)" }}
+        style={{ height: "calc(100vh - 200px)", width: "calc(100vw - 600px)" }}
       />
     </div>
   );
