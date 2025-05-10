@@ -334,66 +334,77 @@ export default function App() {
   const renderTleResults = () => {
     if (!tleResults) return null;
     return (
-      <>
-        <div className="mt-4">
-          <h2 className="text-lg font-semibold">Results</h2>
-          <div className="mt-2">
-            <table className="table-auto w-full">
-              <thead>
-                <tr>
-                  <th className="px-4 py-2">Time</th>
-                  <th className="px-4 py-2">Position (km)</th>
-                  <th className="px-4 py-2">Velocity (km/s)</th>
-                  <th className="px-4 py-2">LLA</th>
-                  <th className="px-4 py-2">Error</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tleResults.map((row, i) => (
-                  <tr key={i}>
-                    <td className="border px-4 py-2">{row.time}</td>
-                    <td className="border px-4 py-2">
-                      {row.pos_km?.join(", ")}
-                    </td>
-                    <td className="border px-4 py-2">
-                      {row.vel_kms?.join(", ")}
-                    </td>
-                    <td className="border px-4 py-2">{row.lla?.join(", ")}</td>
-                    <td className="border px-4 py-2">{row.error}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </>
+      <div className=" overflow-x-auto text-xs">
+        <table className="table-auto w-full text-left border-collapse bg-surface rounded shadow">
+          <thead>
+            <tr>
+              <th className="px-4 py-2 text-accent border-b border-surface-dark">
+                Time
+              </th>
+              <th className="px-4 py-2 text-accent border-b border-surface-dark">
+                Position (km)
+              </th>
+              <th className="px-4 py-2 text-accent border-b border-surface-dark">
+                Velocity (km/s)
+              </th>
+              <th className="px-4 py-2 text-accent border-b border-surface-dark">
+                LLA
+              </th>
+              <th className="px-4 py-2 text-accent border-b border-surface-dark">
+                Error
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {tleResults.map((row, i) => (
+              <tr key={i} className="hover:bg-surface-light transition-colors">
+                <td className="border-b border-surface-dark px-4 py-2 text-text-muted">
+                  {row.time}
+                </td>
+                <td className="border-b border-surface-dark px-4 py-2 text-text">
+                  {row.pos_km?.join(", ")}
+                </td>
+                <td className="border-b border-surface-dark px-4 py-2 text-text">
+                  {row.vel_kms?.join(", ")}
+                </td>
+                <td className="border-b border-surface-dark px-4 py-2 text-text">
+                  {row.lla?.join(", ")}
+                </td>
+                <td className="border-b border-surface-dark px-4 py-2 text-text">
+                  {row.error}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     );
   };
 
   const renderForm = () => {
     return (
       <div className="space-y-6">
-        <div className="bg-white rounded-lg  p-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">
-            Starling Atlas: Astrodynamics Propagation
+        <div className="bg-surface p-2 border-r border-surface-dark">
+          <h1 className="text-xl mb-6 tracking-wide">
+            Astrodynamics Propagation
           </h1>
           {/* Tabs */}
-          <div className="flex space-x-4 border-b mb-6">
+          <div className="flex space-x-4 border-b border-surface-dark mb-6">
             <button
-              className={`px-4 py-2 ${
+              className={`px-4 py-2 font-semibold transition-colors duration-200 rounded-t-md focus:outline-none focus:ring-2 focus:ring-accent ${
                 tab === "TLE"
-                  ? "border-b-2 border-blue-500 text-blue-600"
-                  : "text-gray-500"
+                  ? "border-b-4 border-accent text-accent bg-primary"
+                  : "text-text-muted hover:text-accent hover:bg-surface-light"
               }`}
               onClick={() => setTab("TLE")}
             >
               TLE Propagation
             </button>
             <button
-              className={`px-4 py-2 ${
+              className={`px-4 py-2 font-semibold transition-colors duration-200 rounded-t-md focus:outline-none focus:ring-2 focus:ring-accent ${
                 tab === "StateVector"
-                  ? "border-b-2 border-blue-500 text-blue-600"
-                  : "text-gray-500"
+                  ? "border-b-4 border-accent text-accent bg-primary"
+                  : "text-text-muted hover:text-accent hover:bg-surface-light"
               }`}
               onClick={() => setTab("StateVector")}
             >
@@ -405,14 +416,14 @@ export default function App() {
           {tab === "TLE" && (
             <form onSubmit={handleTleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-accent">
                   Propagator
                 </label>
                 <select
                   name="propagator"
                   value={tleForm.propagator}
                   onChange={handleTleChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-md border border-surface-dark bg-primary text-text focus:border-accent focus:ring-accent"
                 >
                   {propagatorsTLE.map((p) => (
                     <option key={p} value={p}>
@@ -422,7 +433,7 @@ export default function App() {
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-text">
                   TLE Line 1
                 </label>
                 <input
@@ -431,11 +442,11 @@ export default function App() {
                   onChange={handleTleChange}
                   required
                   autoComplete="off"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-md border border-surface-dark bg-primary text-text focus:border-accent focus:ring-accent"
                 />
               </div>
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-text">
                   TLE Line 2
                 </label>
                 <input
@@ -444,11 +455,11 @@ export default function App() {
                   onChange={handleTleChange}
                   required
                   autoComplete="off"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-md border border-surface-dark bg-primary text-text focus:border-accent focus:ring-accent"
                 />
               </div>
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-text">
                   Start Time (UTC)
                 </label>
                 <input
@@ -457,13 +468,13 @@ export default function App() {
                   value={tleForm.start_time}
                   onChange={handleTleChange}
                   required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-md border border-surface-dark bg-primary text-text focus:border-accent focus:ring-accent"
                 />
               </div>
               <div className="space-y-2">
                 <div className="flex space-x-4">
                   <div className="w-1/2">
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-text">
                       Step (minutes)
                     </label>
                     <input
@@ -473,11 +484,11 @@ export default function App() {
                       value={tleForm.step_minutes}
                       onChange={handleTleChange}
                       required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      className="mt-1 block w-full rounded-md border border-surface-dark bg-primary text-text focus:border-accent focus:ring-accent"
                     />
                   </div>
                   <div className="w-1/2">
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-text">
                       Count
                     </label>
                     <input
@@ -487,7 +498,7 @@ export default function App() {
                       value={tleForm.count}
                       onChange={handleTleChange}
                       required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      className="mt-1 block w-full rounded-md border border-surface-dark bg-primary text-text focus:border-accent focus:ring-accent"
                     />
                   </div>
                 </div>
@@ -495,11 +506,11 @@ export default function App() {
               <button
                 type="submit"
                 disabled={tleLoading}
-                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md"
+                className="border cursor-pointer mt-4 px-4 py-2 bg-accent text-primary font-bold rounded-md shadow hover:bg-accent-dark transition-colors duration-200 disabled:opacity-60"
               >
                 {tleLoading ? "Propagating..." : "Propagate"}
               </button>
-              {tleError && <div className="text-red-500">{tleError}</div>}
+              {tleError && <div className="text-red-500 mt-2">{tleError}</div>}
             </form>
           )}
 
@@ -507,14 +518,14 @@ export default function App() {
           {tab === "StateVector" && (
             <form onSubmit={handleSvSubmit} className="space-y-4">
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-text">
                   Propagator
                 </label>
                 <select
                   name="propagator"
                   value={svForm.propagator}
                   onChange={handleSvChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-md border border-surface-dark bg-primary text-text focus:border-accent focus:ring-accent"
                 >
                   {propagatorsSV.map((p) => (
                     <option key={p} value={p}>
@@ -524,7 +535,7 @@ export default function App() {
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-text">
                   Position (km)
                 </label>
                 <div className="flex space-x-2">
@@ -536,14 +547,14 @@ export default function App() {
                       value={v}
                       onChange={handleSvChange}
                       required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      className="mt-1 block w-full rounded-md border border-surface-dark bg-primary text-text focus:border-accent focus:ring-accent"
                       placeholder={["x", "y", "z"][i]}
                     />
                   ))}
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-text">
                   Velocity (km/s)
                 </label>
                 <div className="flex space-x-2">
@@ -555,14 +566,14 @@ export default function App() {
                       value={v}
                       onChange={handleSvChange}
                       required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      className="mt-1 block w-full rounded-md border border-surface-dark bg-primary text-text focus:border-accent focus:ring-accent"
                       placeholder={["vx", "vy", "vz"][i]}
                     />
                   ))}
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-text">
                   Start Time (UTC)
                 </label>
                 <input
@@ -571,13 +582,13 @@ export default function App() {
                   value={svForm.start_time}
                   onChange={handleSvChange}
                   required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-md border border-surface-dark bg-primary text-text focus:border-accent focus:ring-accent"
                 />
               </div>
               <div className="space-y-2">
                 <div className="flex space-x-4">
                   <div className="w-1/2">
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-text">
                       Step (minutes)
                     </label>
                     <input
@@ -587,11 +598,11 @@ export default function App() {
                       value={svForm.step_minutes}
                       onChange={handleSvChange}
                       required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      className="mt-1 block w-full rounded-md border border-surface-dark bg-primary text-text focus:border-accent focus:ring-accent"
                     />
                   </div>
                   <div className="w-1/2">
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-text">
                       Count
                     </label>
                     <input
@@ -601,7 +612,7 @@ export default function App() {
                       value={svForm.count}
                       onChange={handleSvChange}
                       required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      className="mt-1 block w-full rounded-md border border-surface-dark bg-primary text-text focus:border-accent focus:ring-accent"
                     />
                   </div>
                 </div>
@@ -609,42 +620,59 @@ export default function App() {
               <button
                 type="submit"
                 disabled={svLoading}
-                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md"
+                className="mt-4 px-4 py-2 bg-accent text-primary font-bold rounded-md shadow hover:bg-accent-dark transition-colors duration-200 disabled:opacity-60"
               >
                 {svLoading ? "Propagating..." : "Propagate"}
               </button>
-              {svError && <div className="text-red-500">{svError}</div>}
+              {svError && <div className="text-red-500 mt-2">{svError}</div>}
             </form>
           )}
           {/* SV Results Table */}
           {tab === "StateVector" && svResults && (
             <div className="mt-4">
-              <h2 className="text-lg font-semibold">Results</h2>
-              <div className="mt-2">
-                <table className="table-auto w-full">
+              <h2 className="text-lg font-semibold text-accent">Results</h2>
+              <div className="mt-2 overflow-x-auto">
+                <table className="table-auto w-full text-left border-collapse bg-surface shadow">
                   <thead>
                     <tr>
-                      <th className="px-4 py-2">Time</th>
-                      <th className="px-4 py-2">Position (km)</th>
-                      <th className="px-4 py-2">Velocity (km/s)</th>
-                      <th className="px-4 py-2">LLA</th>
-                      <th className="px-4 py-2">Error</th>
+                      <th className="px-4 py-2 text-accent border-b border-surface-dark">
+                        Time
+                      </th>
+                      <th className="px-4 py-2 text-accent border-b border-surface-dark">
+                        Position (km)
+                      </th>
+                      <th className="px-4 py-2 text-accent border-b border-surface-dark">
+                        Velocity (km/s)
+                      </th>
+                      <th className="px-4 py-2 text-accent border-b border-surface-dark">
+                        LLA
+                      </th>
+                      <th className="px-4 py-2 text-accent border-b border-surface-dark">
+                        Error
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {svResults.map((row, i) => (
-                      <tr key={i}>
-                        <td className="border px-4 py-2">{row.time}</td>
-                        <td className="border px-4 py-2">
+                      <tr
+                        key={i}
+                        className="hover:bg-surface-light transition-colors"
+                      >
+                        <td className="border-b border-surface-dark px-4 py-2 text-text-muted">
+                          {row.time}
+                        </td>
+                        <td className="border-b border-surface-dark px-4 py-2 text-text">
                           {row.pos_km?.join(", ")}
                         </td>
-                        <td className="border px-4 py-2">
+                        <td className="border-b border-surface-dark px-4 py-2 text-text">
                           {row.vel_kms?.join(", ")}
                         </td>
-                        <td className="border px-4 py-2">
+                        <td className="border-b border-surface-dark px-4 py-2 text-text">
                           {row.lla?.join(", ")}
                         </td>
-                        <td className="border px-4 py-2">{row.error}</td>
+                        <td className="border-b border-surface-dark px-4 py-2 text-text">
+                          {row.error}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -663,27 +691,27 @@ export default function App() {
     }
     return (
       <div>
-        <div className="text-xl text-white">Satellites</div>
+        <div className="text-xl text-accent mb-4">Satellites</div>
         <ul className="space-y-2">
           {satellites.map((sat) => (
             <li
               key={sat.id}
-              className={`relative p-2 rounded cursor-pointer flex items-center justify-between group ${
+              className={`relative p-2 rounded-lg cursor-pointer flex items-center justify-between group transition-colors duration-200 border border-surface-dark shadow-sm ${
                 sat.id === selectedSatelliteId
-                  ? "bg-blue-600 text-white"
-                  : "bg-white text-gray-900 hover:bg-blue-100"
+                  ? "bg-primary text-accent border-accent"
+                  : "bg-surface text-text hover:bg-surface-light hover:text-accent"
               }`}
               onClick={() => setSelectedSatelliteId(sat.id)}
             >
               <span className="flex items-center">
                 <span
-                  className="inline-block w-3 h-3 rounded-full mr-2 align-middle"
+                  className="inline-block w-3 h-3 rounded-full mr-2 align-middle border border-accent"
                   style={{ backgroundColor: sat.color }}
                 ></span>
                 {sat.displayName}
               </span>
               <button
-                className="ml-2 p-1 rounded hover:bg-gray-200 group-hover:visible focus:visible invisible"
+                className="ml-2 p-1 rounded hover:bg-accent/20 group-hover:visible focus:visible invisible"
                 onClick={(e) => {
                   e.stopPropagation();
                   setOpenMenuId(openMenuId === sat.id ? null : sat.id);
@@ -703,11 +731,11 @@ export default function App() {
               </button>
               {openMenuId === sat.id && (
                 <div
-                  className="absolute right-2 top-8 z-10 bg-white border rounded shadow-lg py-1 w-28"
+                  className="bg-primary absolute right-2 top-8 z-10 bg-surface border border-surface-dark rounded shadow-lg py-1 w-28"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <button
-                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                    className="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-accent/10 rounded"
                     onClick={() => handleDeleteSatellite(sat.id)}
                   >
                     Delete
@@ -739,17 +767,19 @@ export default function App() {
       : [];
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-transparent">
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-primary">
       <div className="flex flex-1">
-        <div className="w-[400px] overflow-y-auto border-r">{renderForm()}</div>
-        <div className="flex-1 flex items-center justify-center p-0 bg-transparent">
+        <div className="w-[400px] overflow-y-auto  bg-surface p-0">
+          {renderForm()}
+        </div>
+        <div className="flex-1 flex items-center justify-center p-0 bg-black">
           <GlobeCanvas satellites={satellites} />
         </div>
-        <div className="w-[300px] overflow-y-auto border-l border-gray-200 bg-gray-500 p-8">
+        <div className="w-[300px] overflow-y-auto border-l border-surface-dark bg-surface p-2">
           {renderSatelliteList()}
         </div>
       </div>
-      <div className="w-full h-[200px] overflow-y-auto border-t border-gray-200 p-4 ">
+      <div className="w-full h-[200px] overflow-y-auto border-t border-surface-dark bg-surface p-4 ">
         {renderTleResults()}
       </div>
     </div>

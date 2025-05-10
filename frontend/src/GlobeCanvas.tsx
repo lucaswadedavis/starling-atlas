@@ -100,7 +100,7 @@ const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
       .particleAltitude("alt")
       .particlesSize(2)
       .pathsData(paths)
-      .pathColor((...args) => {
+      .pathColor((...args: any[]) => {
         console.log("color args", args);
         return "red";
       })
@@ -193,7 +193,7 @@ const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
       const colors = pathsData.map((p) => p.color);
       console.log("colors", colors);
       globeInstance.current.pathsData(paths);
-      globeInstance.current.pathColor((...args) => {
+      globeInstance.current.pathColor((...args: any[]) => {
         console.log("color args", args);
         // get the index of the path
         const pathIndex = paths.indexOf(args[0]);
@@ -249,10 +249,11 @@ const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
   }
 
   return (
-    <div>
+    <div className="bg-primary flex items-center justify-center">
       <div
         ref={globeRef}
         style={{ height: "calc(100vh - 200px)", width: "calc(100vw - 600px)" }}
+        className=""
       />
     </div>
   );

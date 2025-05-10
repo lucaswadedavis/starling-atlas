@@ -2,6 +2,7 @@
 
 body {
   margin: 0;
+  @apply bg-primary text-text;
 }
 
 #root {
