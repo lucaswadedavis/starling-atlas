@@ -46,6 +46,7 @@ const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth - 600, window.innerHeight - 200);
     renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setClearColor(0xffffff, 1); // Set background to white
     globeRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
@@ -85,7 +86,6 @@ const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
           : [],
       }))
       .filter((p) => p.path.length > 1);
-    console.log("pathsdata", pathsData);
     const paths = pathsData.map((p) =>
       p.path.map((pt) => [pt.lat, pt.lng, pt.alt])
     );
@@ -249,7 +249,7 @@ const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
   }
 
   return (
-    <div className="bg-primary flex items-center justify-center">
+    <div className="bg-white flex items-center justify-center border-l-1">
       <div
         ref={globeRef}
         style={{ height: "calc(100vh - 200px)", width: "calc(100vw - 600px)" }}

@@ -64,3 +64,8 @@ The frontend client runs at [http://localhost:5173](http://localhost:5173).
 - Unique class names (`sat-popover` and `menu-button`) are used to accurately detect outside clicks and prevent accidental closure when interacting with the menu.
 
 These changes improve the user experience and visual clarity of the satellite management panel.
+
+## Globe Canvas Background
+
+- The background of the 3D globe canvas is now white instead of black, for a cleaner and more consistent look with the rest of the UI.
+- This is achieved by setting the Three.js renderer's clear color to white and updating the container's background class to `bg-white` in `GlobeCanvas.tsx`.

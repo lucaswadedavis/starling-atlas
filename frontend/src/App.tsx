@@ -384,7 +384,7 @@ export default function App() {
   const renderForm = () => {
     return (
       <div className="space-y-6">
-        <div className="bg-surface p-2 border-r border-surface-dark">
+        <div className="bg-surface p-2">
           <h1 className="text-xl mb-6 tracking-wide">
             Astrodynamics Propagation
           </h1>
