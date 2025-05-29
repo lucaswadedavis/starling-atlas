@@ -94,7 +94,7 @@ const GlobeCanvas: React.FC<GlobeCanvasProps> = ({ satellites }) => {
     console.log("colors", colors);
     // Setup globe
     const Globe = new ThreeGlobe()
-      .globeImageUrl("/assets/earth-blue-marble.jpg")
+      .globeImageUrl("/assets/earth-blue-marble-desaturated.jpg")
       .particleLat("lat")
       .particleLng("lng")
       .particleAltitude("alt")
