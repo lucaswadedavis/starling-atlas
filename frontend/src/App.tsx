@@ -711,7 +711,7 @@ export default function App() {
                 {sat.displayName}
               </span>
               <button
-                className="ml-2 p-1 rounded hover:bg-accent/20 group-hover:visible focus:visible invisible"
+                className="ml-2 p-1 rounded hover:bg-accent/20 group-hover:visible focus:visible invisible menu-button"
                 onClick={(e) => {
                   e.stopPropagation();
                   setOpenMenuId(openMenuId === sat.id ? null : sat.id);
@@ -731,7 +731,7 @@ export default function App() {
               </button>
               {openMenuId === sat.id && (
                 <div
-                  className="bg-primary absolute right-2 top-8 z-10 bg-surface border border-surface-dark rounded shadow-lg py-1 w-28"
+                  className="sat-popover absolute right-2 top-8 z-10 bg-white border border-surface-dark rounded shadow-lg py-1 w-28"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <button
@@ -765,6 +765,22 @@ export default function App() {
           },
         ]
       : [];
+
+  // Add this useEffect after the other useEffects
+  useEffect(() => {
+    if (!openMenuId) return;
+    function handleClickOutside(e: MouseEvent) {
+      // Close if click is outside any .sat-popover or .menu-button
+      if (
+        !(e.target as HTMLElement).closest(".sat-popover") &&
+        !(e.target as HTMLElement).closest(".menu-button")
+      ) {
+        setOpenMenuId(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [openMenuId]);
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-primary">

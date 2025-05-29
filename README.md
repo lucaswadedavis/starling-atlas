@@ -56,3 +56,11 @@ See the code in `frontend/src/GlobeCanvas.tsx` for implementation details.
 - If you need additional PostCSS plugins, you will need to reintroduce a PostCSS config and dependencies.
 
 The frontend client runs at [http://localhost:5173](http://localhost:5173).
+
+## Satellite Popover Improvements
+
+- The satellite options popover in the right panel now uses a white background (`bg-white`) for better visibility and consistency.
+- The popover closes automatically when clicking outside of it, thanks to a new `useEffect` in `App.tsx` that listens for outside clicks.
+- Unique class names (`sat-popover` and `menu-button`) are used to accurately detect outside clicks and prevent accidental closure when interacting with the menu.
+
+These changes improve the user experience and visual clarity of the satellite management panel.
