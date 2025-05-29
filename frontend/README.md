@@ -27,25 +27,35 @@ Tailwind is installed and configured manually due to issues with the init comman
    ```js
    module.exports = {
      content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
-     theme: { extend: {} },
+     theme: {
+       extend: {
+         colors: {
+           primary: "#0a2342", // deep blue
+           "primary-light": "#19376d",
+           "primary-dark": "#06172a",
+           accent: "#ffd700", // gold
+           "accent-light": "#ffe066",
+           "accent-dark": "#bfa100",
+           surface: "#181c23", // dark surface
+           "surface-light": "#232a34",
+           "surface-dark": "#101217",
+           text: "#f5f6fa", // light text
+           "text-muted": "#b0b7c3",
+         },
+       },
+     },
      plugins: [],
    };
    ```
-3. Created `postcss.config.js`:
-   ```js
-   module.exports = {
-     plugins: {
-       tailwindcss: {},
-       autoprefixer: {},
-     },
-   };
-   ```
+3. Created `postcss.config.js` (no longer needed as of Tailwind v4+).
 4. Added Tailwind directives to `src/index.css`:
    ```css
    @tailwind base;
    @tailwind components;
    @tailwind utilities;
    ```
+
+**Custom colors:** The color palette is now flat (e.g., `primary`, `primary-light`, `primary-dark`, `accent`, etc.), so use class names like `bg-primary`, `bg-primary-light`, `text-accent`, etc. in your code.
 
 ## Running the Frontend
 

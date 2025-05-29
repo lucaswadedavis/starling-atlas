@@ -47,3 +47,12 @@
 ---
 
 See the code in `frontend/src/GlobeCanvas.tsx` for implementation details.
+
+## Frontend CSS Setup (as of Tailwind v4+)
+
+- **Tailwind CSS** is now configured using the `@tailwindcss/vite` plugin in `vite.config.ts`.
+- **PostCSS** is no longer used or required. The `postcss.config.cjs` file has been deleted.
+- **autoprefixer** and **postcss** dependencies have been removed from `package.json`.
+- If you need additional PostCSS plugins, you will need to reintroduce a PostCSS config and dependencies.
+
+The frontend client runs at [http://localhost:5173](http://localhost:5173).
